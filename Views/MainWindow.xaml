@@ -1,0 +1,48 @@
+<Window x:Class="MouseRecorderWpf.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:MouseRecorderWpf.ViewModels"
+        Title="鼠标录制器" Height="600" Width="900"
+        WindowStartupLocation="CenterScreen">
+    
+    <Window.DataContext>
+        <vm:MainWindowViewModel/>
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- 侧边栏 -->
+        <Border Background="#F9FAFC" BorderBrush="#E4E7ED" BorderThickness="0,0,1,0">
+            <StackPanel>
+                <!-- 标题区域 -->
+                <Border Padding="20,20">
+                    <TextBlock Text="鼠标录制工具" 
+                             FontSize="16" 
+                             FontWeight="Bold" 
+                             Foreground="#303133"/>
+                </Border>
+                
+                <!-- 分隔线 -->
+                <Border Height="1" Background="#E4E7ED" Margin="0,0,0,5"/>
+
+                <!-- 导航按钮 -->
+                <Button x:Name="BtnRecorder" 
+                        Content="🎬 鼠标录制器"
+                        Style="{StaticResource SidebarActiveButton}"
+                        Click="BtnRecorder_Click"/>
+                
+                <Button x:Name="BtnMultiClick" 
+                        Content="🎯 多目标连点器"
+                        Style="{StaticResource SidebarButton}"
+                        Click="BtnMultiClick_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 内容区域 -->
+        <ContentControl Grid.Column="1" Content="{Binding CurrentView}"/>
+    </Grid>
+</Window>

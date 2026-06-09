@@ -1,0 +1,207 @@
+<UserControl x:Class="MouseRecorderWpf.Views.RecorderControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:MouseRecorderWpf.Views"
+             xmlns:converters="clr-namespace:MouseRecorderWpf.Converters"
+             xmlns:viewmodels="clr-namespace:MouseRecorderWpf.ViewModels"
+             xmlns:models="clr-namespace:MouseRecorderWpf.Models"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="600">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 左边：脚本列表 -->
+                <Grid Grid.Column="0" Margin="0,0,5,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="脚本列表" FontWeight="SemiBold" FontSize="14" Foreground="#606266" Margin="0,0,0,5"/>
+                    
+                    <!-- 按钮放在顶部，使用WrapPanel让按钮自动换行（如果宽度不够） -->
+                    <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="重命名" Width="72" Height="30" Margin="0,0,5,5" Click="BtnRenameScript_Click" Style="{StaticResource DefaultButton}"/>
+                        <Button Content="导出" Width="72" Height="30" Margin="0,0,5,5" Click="BtnExportScript_Click" Style="{StaticResource DefaultButton}"/>
+                        <Button Content="导入" Width="72" Height="30" Margin="0,0,5,5" Click="BtnImportScript_Click" Style="{StaticResource DefaultButton}"/>
+                        <Button Content="删除" Width="72" Height="30" Margin="0,0,0,5" Click="BtnDeleteScript_Click" Style="{StaticResource DangerButton}"/>
+                    </WrapPanel>
+
+                    <Border Grid.Row="2" BorderBrush="#E4E7ED" BorderThickness="1" CornerRadius="6" Padding="5" Background="White">
+                        <ListBox ItemsSource="{Binding Scripts}" 
+                                 SelectedItem="{Binding ActiveScript}" 
+                                 Height="130" 
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 x:Name="ScriptsListBox">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="2"/>
+                                    <EventSetter Event="MouseDoubleClick" Handler="ScriptItem_DoubleClick"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="8,5" CornerRadius="4" 
+                                            Background="Transparent"
+                                            x:Name="ItemBorder">
+                                        <StackPanel Orientation="Vertical">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Medium" FontSize="13" Foreground="#303133"/>
+                                            <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" FontSize="11" Foreground="#909399"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}" Value="True">
+                                            <Setter TargetName="ItemBorder" Property="Background" Value="#ECF5FF"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock Text="{Binding StatusText}" FontSize="13" Foreground="#909399"/>
+                        <TextBlock Text=" (" Foreground="#909399"/>
+                        <TextBlock Text="{Binding ActionCount}" Foreground="#409EFF" FontWeight="SemiBold"/>
+                        <TextBlock Text=" 个操作)" Foreground="#909399"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 右边：录制的操作 -->
+                <Grid Grid.Column="1" Margin="5,0,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="录制的操作" FontWeight="SemiBold" FontSize="14" Foreground="#606266" Margin="0,0,0,5"/>
+                    
+                    <!-- 占位符，保证与左边按钮对齐（高度约为35px，等于按钮高度+margin） -->
+                    <Border Grid.Row="1" Height="35" Margin="0,0,0,8"/>
+
+                    <Border Grid.Row="2" BorderBrush="#E4E7ED" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,4,0,0" Background="White">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" MinHeight="120" MaxHeight="120">
+                            <ItemsControl ItemsSource="{Binding RecordedActions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:MouseAction}">
+                                        <TextBlock Text="{Binding Converter={StaticResource ActionConverter}}" FontSize="11" Padding="3" Foreground="#606266"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <GroupBox Grid.Row="1" Header="回放设置" Margin="0,0,0,10">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="重复次数:" VerticalAlignment="Center" Width="80" Foreground="#606266"/>
+                        <TextBox Text="{Binding RepeatCount, UpdateSourceTrigger=PropertyChanged}" Width="100" Height="35" InputScope="Number" Padding="10,0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="速度倍率:" VerticalAlignment="Center" Width="80" Foreground="#606266"/>
+                        <TextBox Text="{Binding SpeedMultiplier, UpdateSourceTrigger=PropertyChanged}" Width="100" Height="35" InputScope="Number" Padding="10,0"/>
+                        <TextBlock Text="倍" VerticalAlignment="Center" Width="30" Foreground="#606266"/>
+                        <TextBlock Text="(支持0.1-100倍)" VerticalAlignment="Center" FontSize="11" Foreground="#909399"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <StackPanel Grid.Row="2">
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="BtnRecord" 
+                            Grid.Column="0"
+                            Margin="0,0,5,0" 
+                            Click="BtnRecord_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                                <Setter Property="Content" Value="开始录制 (F1)"/>
+                                <Setter Property="IsEnabled" Value="True"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                        <Setter Property="Content" Value="停止录制 (F1)"/>
+                                        <Setter Property="Background" Value="#F56C6C"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button x:Name="BtnPlay" 
+                            Grid.Column="1" 
+                            Margin="5,0,5,0" 
+                            Click="BtnPlay_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SuccessButton}">
+                                <Setter Property="Content" Value="开始回放 (F2)"/>
+                                <Setter Property="IsEnabled" Value="True"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                                        <Setter Property="Content" Value="停止回放 (F2)"/>
+                                        <Setter Property="Background" Value="#F56C6C"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button x:Name="BtnStop" Content="停止 (F3)" 
+                            Grid.Column="2" 
+                            Margin="5,0,5,0" 
+                            Click="BtnStop_Click"
+                            Style="{StaticResource DangerButton}"/>
+                    <Button Content="清空列表" 
+                            Grid.Column="3"
+                            Margin="5,0,0,0" 
+                            Click="BtnClear_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource DefaultButton}">
+                                <Setter Property="IsEnabled" Value="True"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>
