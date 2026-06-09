@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:MouseRecorderWpf.ViewModels"
         Title="鼠标录制器" Height="600" Width="900"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Icon="pack://application:,,,/Icons/app.ico">
     
     <Window.DataContext>
         <vm:MainWindowViewModel/>
