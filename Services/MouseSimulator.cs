@@ -15,6 +15,8 @@ namespace MouseRecorderWpf.Services
         private const uint MOUSEEVENTF_RIGHTUP = 0x0010;
         private const uint MOUSEEVENTF_MIDDLEDOWN = 0x0020;
         private const uint MOUSEEVENTF_MIDDLEUP = 0x0040;
+        private const uint MOUSEEVENTF_MOVE = 0x0001;
+        private const uint MOUSEEVENTF_ABSOLUTE = 0x8000;
 
         [DllImport("user32.dll")]
         private static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, UIntPtr dwExtraInfo);
@@ -25,11 +27,39 @@ namespace MouseRecorderWpf.Services
         [DllImport("user32.dll")]
         private static extern bool GetCursorPos(out POINT lpPoint);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
         [StructLayout(LayoutKind.Sequential)]
         private struct POINT
         {
             public int X;
             public int Y;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct INPUT
+        {
+            public uint Type;
+            public INPUTUNION Data;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        private struct INPUTUNION
+        {
+            [FieldOffset(0)]
+            public MOUSEINPUT Mouse;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MOUSEINPUT
+        {
+            public int dx;
+            public int dy;
+            public uint mouseData;
+            public uint dwFlags;
+            public uint time;
+            public IntPtr dwExtraInfo;
         }
 
         public static Point GetCurrentPosition()
@@ -89,16 +119,16 @@ namespace MouseRecorderWpf.Services
 
         public static void LeftClick()
         {
-            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, UIntPtr.Zero);
+            SendMouseInput(MOUSEEVENTF_LEFTDOWN);
             Thread.Sleep(30);
-            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, UIntPtr.Zero);
+            SendMouseInput(MOUSEEVENTF_LEFTUP);
         }
 
         public static void RightClick()
         {
-            mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, UIntPtr.Zero);
+            SendMouseInput(MOUSEEVENTF_RIGHTDOWN);
             Thread.Sleep(30);
-            mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, UIntPtr.Zero);
+            SendMouseInput(MOUSEEVENTF_RIGHTUP);
         }
 
         public static void DoubleClick()
@@ -110,9 +140,9 @@ namespace MouseRecorderWpf.Services
 
         public static void MiddleClick()
         {
-            mouse_event(MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, UIntPtr.Zero);
+            SendMouseInput(MOUSEEVENTF_MIDDLEDOWN);
             Thread.Sleep(30);
-            mouse_event(MOUSEEVENTF_MIDDLEUP, 0, 0, 0, UIntPtr.Zero);
+            SendMouseInput(MOUSEEVENTF_MIDDLEUP);
         }
 
         public static void PerformAction(MouseAction action)
@@ -135,6 +165,29 @@ namespace MouseRecorderWpf.Services
                     MiddleClick();
                     break;
             }
+        }
+
+        private static void SendMouseInput(uint flags)
+        {
+            var input = new INPUT
+            {
+                Type = 0,
+                Data = new INPUTUNION
+                {
+                    Mouse = new MOUSEINPUT
+                    {
+                        dx = 0,
+                        dy = 0,
+                        mouseData = 0,
+                        dwFlags = flags,
+                        time = 0,
+                        dwExtraInfo = IntPtr.Zero
+                    }
+                }
+            };
+
+            INPUT[] inputs = { input };
+            SendInput(1, inputs, Marshal.SizeOf(typeof(INPUT)));
         }
     }
 }
