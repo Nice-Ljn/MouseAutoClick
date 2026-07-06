@@ -10,16 +10,132 @@ namespace MouseRecorderWpf.Services
     public class MultiClickManager
     {
         private List<MultiClickTarget> targets = new List<MultiClickTarget>();
+        private List<MultiClickPlan> plans = new List<MultiClickPlan>();
+        private MultiClickPlan? currentPlan;
         private bool isRunning = false;
         private CancellationTokenSource? cancellationTokenSource;
         private int nextId = 1;
 
         public event Action<int>? CurrentTargetChanged;
         public event Action? ClickCompleted;
+        public event Action? PlanChanged;
 
         public List<MultiClickTarget> Targets => targets;
 
+        public List<MultiClickPlan> Plans => plans;
+
+        public MultiClickPlan? CurrentPlan => currentPlan;
+
         public bool IsRunning => isRunning;
+
+        public MultiClickManager()
+        {
+            AddPlan("方案A");
+        }
+
+        public void AddPlan(string name)
+        {
+            plans.Add(new MultiClickPlan(name));
+            if (currentPlan == null)
+            {
+                SwitchPlan(name);
+            }
+        }
+
+        public bool SwitchPlan(string planName)
+        {
+            if (isRunning)
+                return false;
+
+            var plan = plans.Find(p => p.Name == planName);
+            if (plan == null)
+                return false;
+
+            SaveCurrentPlan();
+            currentPlan = plan;
+            LoadPlan(plan);
+            PlanChanged?.Invoke();
+            return true;
+        }
+
+        public void DeletePlan(string planName)
+        {
+            if (isRunning)
+                return;
+
+            if (plans.Count <= 1)
+                return;
+
+            var plan = plans.Find(p => p.Name == planName);
+            if (plan == null)
+                return;
+
+            plans.Remove(plan);
+
+            if (currentPlan?.Name == planName)
+            {
+                SwitchPlan(plans[0].Name);
+            }
+        }
+
+        public void RenamePlan(string oldName, string newName)
+        {
+            var plan = plans.Find(p => p.Name == oldName);
+            if (plan != null)
+            {
+                plan.Name = newName;
+                if (currentPlan == plan)
+                {
+                    PlanChanged?.Invoke();
+                }
+            }
+        }
+
+        private void SaveCurrentPlan()
+        {
+            if (currentPlan != null)
+            {
+                currentPlan.Targets.Clear();
+                currentPlan.Targets.AddRange(targets);
+                currentPlan.RepeatCount = repeatCount;
+                currentPlan.LoopInterval = loopInterval;
+            }
+        }
+
+        private void LoadPlan(MultiClickPlan plan)
+        {
+            targets.Clear();
+            foreach (var target in plan.Targets)
+            {
+                targets.Add(new MultiClickTarget(target.Position, target.ClickType, target.Delay, target.Name)
+                {
+                    Id = target.Id
+                });
+            }
+            repeatCount = plan.RepeatCount;
+            loopInterval = plan.LoopInterval;
+            UpdateNextId();
+        }
+
+        private void UpdateNextId()
+        {
+            nextId = targets.Count > 0 ? targets.Max(t => t.Id) + 1 : 1;
+        }
+
+        private int repeatCount = 1;
+        private int loopInterval = 1000;
+
+        public int RepeatCount
+        {
+            get => repeatCount;
+            set => repeatCount = value;
+        }
+
+        public int LoopInterval
+        {
+            get => loopInterval;
+            set => loopInterval = value;
+        }
 
         public void AddTarget(Point position, ClickType clickType, int delay, string name)
         {
@@ -41,7 +157,7 @@ namespace MouseRecorderWpf.Services
         {
             if (index1 < 0 || index1 >= targets.Count || index2 < 0 || index2 >= targets.Count)
                 return;
-            
+
             var temp = targets[index1];
             targets[index1] = targets[index2];
             targets[index2] = temp;
@@ -51,14 +167,14 @@ namespace MouseRecorderWpf.Services
         {
             if (index < 0 || index >= targets.Count)
                 return;
-            
+
             targets[index].Name = name;
             targets[index].Position = position;
             targets[index].ClickType = clickType;
             targets[index].Delay = delay;
         }
 
-        public void Start(int repeatCount, int loopInterval)
+        public void Start()
         {
             if (isRunning || targets.Count == 0)
                 return;
@@ -76,7 +192,6 @@ namespace MouseRecorderWpf.Services
                         if (cancellationTokenSource.Token.IsCancellationRequested)
                             break;
 
-                        // 检查是否达到指定循环次数（repeatCount为0时表示无限循环）
                         if (repeatCount > 0 && loopIndex >= repeatCount)
                             break;
 
@@ -105,7 +220,6 @@ namespace MouseRecorderWpf.Services
 
                             CurrentTargetChanged?.Invoke(j);
 
-                            // 目标点之间的延迟
                             if (j < targets.Count - 1)
                             {
                                 await Task.Delay(target.Delay, cancellationTokenSource.Token);
@@ -114,7 +228,6 @@ namespace MouseRecorderWpf.Services
 
                         loopIndex++;
 
-                        // 循环之间的间隙（如果还有下一次循环）
                         bool hasNextLoop = repeatCount == 0 || loopIndex < repeatCount;
                         if (hasNextLoop && loopInterval > 0)
                         {

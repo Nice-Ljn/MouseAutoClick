@@ -11,6 +11,11 @@
 
     <UserControl.Resources>
         <converters:ClickTypeToIndexConverter x:Key="ClickTypeToIndexConverter"/>
+        <x:Array x:Key="ClickTypeList" Type="system:String" xmlns:system="clr-namespace:System;assembly=mscorlib">
+            <system:String>左键</system:String>
+            <system:String>右键</system:String>
+            <system:String>双击</system:String>
+        </x:Array>
     </UserControl.Resources>
 
     <UserControl.DataContext>
@@ -21,11 +26,23 @@
         <Grid Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto" MinHeight="250"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="当前方案:" Foreground="#909399" FontSize="13" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="PlanComboBox" Width="150" Margin="5,0,10,0" 
+                              ItemsSource="{Binding PlanNames}" 
+                              SelectedItem="{Binding CurrentPlanName, Mode=TwoWay}"
+                              SelectionChanged="PlanComboBox_SelectionChanged"/>
+                    <Button Content="添加方案" Width="90" Click="BtnAddPlan_Click" Style="{StaticResource PrimaryButton}"/>
+                    <Button Content="删除方案" Width="90" Margin="5,0,0,0" Click="BtnDeletePlan_Click" Style="{StaticResource DangerButton}"/>
+                    <TextBox x:Name="PlanRenameTextBox" Width="100" Margin="10,0,5,0" Text="重命名" GotFocus="PlanRenameTextBox_GotFocus" LostFocus="PlanRenameTextBox_LostFocus"/>
+                    <Button Content="重命名" Width="70" Click="BtnRenamePlan_Click" Style="{StaticResource DefaultButton}"/>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
                     <TextBlock Text="当前鼠标位置:" Foreground="#909399" FontSize="13"/>
                     <TextBlock Text="{Binding CurrentPosition}" Foreground="#409EFF" FontWeight="SemiBold" FontSize="13" Margin="5,0,0,0"/>

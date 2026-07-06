@@ -56,5 +56,62 @@ namespace MouseRecorderWpf.Views
                 ViewModel.SyncTargetFromGrid(ViewModel.SelectedIndex);
             }
         }
+
+        private void PlanComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0)
+            {
+                var planName = e.AddedItems[0] as string;
+                if (!string.IsNullOrEmpty(planName))
+                {
+                    ViewModel.SwitchPlan(planName);
+                }
+            }
+        }
+
+        private void BtnAddPlan_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.AddPlan();
+        }
+
+        private void BtnDeletePlan_Click(object sender, RoutedEventArgs e)
+        {
+            if (ViewModel.PlanNames.Count <= 1)
+            {
+                System.Windows.MessageBox.Show("至少需要保留一个方案", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            ViewModel.DeletePlan();
+        }
+
+        private void BtnRenamePlan_Click(object sender, RoutedEventArgs e)
+        {
+            var newName = PlanRenameTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(newName))
+            {
+                System.Windows.MessageBox.Show("请输入方案名称", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            ViewModel.RenamePlan(newName);
+            PlanRenameTextBox.Text = "重命名";
+        }
+
+        private void PlanRenameTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            var textBox = sender as System.Windows.Controls.TextBox;
+            if (textBox != null && textBox.Text == "重命名")
+            {
+                textBox.Text = "";
+            }
+        }
+
+        private void PlanRenameTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            var textBox = sender as System.Windows.Controls.TextBox;
+            if (textBox != null && string.IsNullOrEmpty(textBox.Text))
+            {
+                textBox.Text = "重命名";
+            }
+        }
     }
 }
