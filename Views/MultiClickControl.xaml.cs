@@ -86,31 +86,17 @@ namespace MouseRecorderWpf.Views
 
         private void BtnRenamePlan_Click(object sender, RoutedEventArgs e)
         {
-            var newName = PlanRenameTextBox.Text.Trim();
-            if (string.IsNullOrEmpty(newName))
+            var dialog = new InputDialog("请输入新的方案名称", ViewModel.CurrentPlanName);
+            dialog.Owner = Window.GetWindow(this);
+            if (dialog.ShowDialog() == true)
             {
-                System.Windows.MessageBox.Show("请输入方案名称", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            ViewModel.RenamePlan(newName);
-            PlanRenameTextBox.Text = "重命名";
-        }
-
-        private void PlanRenameTextBox_GotFocus(object sender, RoutedEventArgs e)
-        {
-            var textBox = sender as System.Windows.Controls.TextBox;
-            if (textBox != null && textBox.Text == "重命名")
-            {
-                textBox.Text = "";
-            }
-        }
-
-        private void PlanRenameTextBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            var textBox = sender as System.Windows.Controls.TextBox;
-            if (textBox != null && string.IsNullOrEmpty(textBox.Text))
-            {
-                textBox.Text = "重命名";
+                var newName = dialog.InputValue;
+                if (string.IsNullOrEmpty(newName))
+                {
+                    System.Windows.MessageBox.Show("请输入方案名称", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                ViewModel.RenamePlan(newName);
             }
         }
     }

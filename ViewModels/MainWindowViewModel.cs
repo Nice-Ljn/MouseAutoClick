@@ -48,6 +48,12 @@ namespace MouseRecorderWpf.ViewModels
             ActiveTab = 1;
         }
 
+        public void SwitchToMixedAction()
+        {
+            CurrentView = new MixedActionControl();
+            ActiveTab = 2;
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)

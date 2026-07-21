@@ -73,6 +73,40 @@ namespace MouseRecorderWpf.Views
                         multiClick.BtnStop_Click(null, null);
                     }
                 }
+                if (ViewModel.ActiveTab == 2)
+                {
+                    if (ViewModel.CurrentView is MixedActionControl mixedAction)
+                    {
+                        mixedAction.BtnStop_Click(null, null);
+                    }
+                }
+            }));
+            HotkeyRegistry.Register(116, () => Dispatcher.Invoke(() => {
+                if (ViewModel.ActiveTab == 2)
+                {
+                    if (ViewModel.CurrentView is MixedActionControl mixedAction)
+                    {
+                        mixedAction.BtnStart_Click(null, null);
+                    }
+                }
+            }));
+            HotkeyRegistry.Register(118, () => Dispatcher.Invoke(() => {
+                if (ViewModel.ActiveTab == 2)
+                {
+                    if (ViewModel.CurrentView is MixedActionControl mixedAction)
+                    {
+                        mixedAction.BtnToggleRecording_Click(null, null);
+                    }
+                }
+            }));
+            HotkeyRegistry.Register(115, () => Dispatcher.Invoke(() => {
+                if (ViewModel.ActiveTab == 2)
+                {
+                    if (ViewModel.CurrentView is MixedActionControl mixedAction)
+                    {
+                        mixedAction.BtnAddMouseLeft_Click(null, null);
+                    }
+                }
             }));
         }
 
@@ -84,6 +118,7 @@ namespace MouseRecorderWpf.Views
             HotkeyRegistry.Unregister(115, _emptyAction);
             HotkeyRegistry.Unregister(116, _emptyAction);
             HotkeyRegistry.Unregister(117, _emptyAction);
+            HotkeyRegistry.Unregister(118, _emptyAction);
         }
 
         private void BtnRecorder_Click(object sender, RoutedEventArgs e)
@@ -98,12 +133,21 @@ namespace MouseRecorderWpf.Views
             UpdateButtonStyles();
         }
 
+        private void BtnMixedAction_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SwitchToMixedAction();
+            UpdateButtonStyles();
+        }
+
         private void UpdateButtonStyles()
         {
             BtnRecorder.Style = ViewModel.ActiveTab == 0 
                 ? (Style)FindResource("SidebarActiveButton") 
                 : (Style)FindResource("SidebarButton");
             BtnMultiClick.Style = ViewModel.ActiveTab == 1 
+                ? (Style)FindResource("SidebarActiveButton") 
+                : (Style)FindResource("SidebarButton");
+            BtnMixedAction.Style = ViewModel.ActiveTab == 2 
                 ? (Style)FindResource("SidebarActiveButton") 
                 : (Style)FindResource("SidebarButton");
         }

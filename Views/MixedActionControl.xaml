@@ -1,25 +1,15 @@
-<UserControl x:Class="MouseRecorderWpf.Views.MultiClickControl"
+<UserControl x:Class="MouseRecorderWpf.Views.MixedActionControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:MouseRecorderWpf.ViewModels"
              xmlns:models="clr-namespace:MouseRecorderWpf.Models"
-             xmlns:converters="clr-namespace:MouseRecorderWpf.Converters"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
 
-    <UserControl.Resources>
-        <converters:ClickTypeToIndexConverter x:Key="ClickTypeToIndexConverter"/>
-        <x:Array x:Key="ClickTypeList" Type="system:String" xmlns:system="clr-namespace:System;assembly=mscorlib">
-            <system:String>左键</system:String>
-            <system:String>右键</system:String>
-            <system:String>双击</system:String>
-        </x:Array>
-    </UserControl.Resources>
-
     <UserControl.DataContext>
-        <vm:MultiClickViewModel/>
+        <vm:MixedActionViewModel/>
     </UserControl.DataContext>
 
     <Grid>
@@ -39,7 +29,7 @@
                 <Grid Grid.Row="0" Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
@@ -49,8 +39,8 @@
                         <TextBlock Text="方案管理" FontWeight="SemiBold" FontSize="15" Foreground="#111827" Margin="10,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal"  VerticalAlignment="Center">
-                        <ComboBox x:Name="PlanComboBox" Width="180"
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ComboBox x:Name="PlanComboBox" Width="160"
                                   ItemsSource="{Binding PlanNames}"
                                   SelectedItem="{Binding CurrentPlanName, Mode=TwoWay}"
                                   SelectionChanged="PlanComboBox_SelectionChanged"
@@ -67,33 +57,48 @@
                         </Button>
                         <Border Width="1" Height="20" Background="#E5E7EB" Margin="12,0,10,0" VerticalAlignment="Center"/>
                         <Button Content="重命名" Click="BtnRenamePlan_Click" Style="{StaticResource SmallButton}"/>
-                        <!--<Button Content="＋ 添加目标点" Margin="6,0,0,0" Click="BtnAdd_Click" Style="{StaticResource SmallPrimaryButton}"/>-->
-
+                        <Button Content="导出" Margin="6,0,0,0" Click="BtnExportPlan_Click" Style="{StaticResource SmallButton}"/>
+                        <Button Content="导入" Margin="6,0,0,0" Click="BtnImportPlan_Click" Style="{StaticResource SmallButton}"/>
                     </StackPanel>
                 </Grid>
 
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="当前位置:" Foreground="#6B7280" FontSize="12" VerticalAlignment="Center"/>
-                        <Border Background="#F3F4F6" CornerRadius="5" Padding="8,3" Margin="8,0,0,0" VerticalAlignment="Center">
+                        <Border Background="#EFF6FF" CornerRadius="5" Padding="7,3" Margin="8,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="{Binding CurrentPosition}"
-                                       Foreground="#374151"
+                                       Foreground="#3B82F6"
                                        FontWeight="SemiBold"
                                        FontSize="12"
                                        VerticalAlignment="Center"/>
                         </Border>
-                        <TextBlock Text="F4 快速添加"
+                        <TextBlock Text="F4 添加鼠标左键"
                                    FontSize="11"
                                    Foreground="#9CA3AF"
                                    Margin="12,0,0,0"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
 
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock Text="状态:" Foreground="#6B7280" FontSize="12" VerticalAlignment="Center"/>
+                        <Border Background="#ECFDF5" CornerRadius="5" Padding="7,3" Margin="8,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding StatusText}"
+                                       Foreground="#10B981"
+                                       FontWeight="SemiBold"
+                                       FontSize="12"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="F7 录制键鼠"
+                                   FontSize="11"
+                                   Foreground="#9CA3AF"
+                                   Margin="12,0,0,0"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
                 </Grid>
             </Grid>
         </Border>
@@ -106,10 +111,10 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
-                    <Border Width="28" Height="28" CornerRadius="7" Background="#ECFDF5" VerticalAlignment="Center">
-                        <TextBlock Text="🎯" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Border Width="28" Height="28" CornerRadius="7" Background="#FFF7ED" VerticalAlignment="Center">
+                        <TextBlock Text="📝" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                    <TextBlock Text="目标点列表" FontWeight="SemiBold" FontSize="14" Foreground="#111827" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="操作列表" FontWeight="SemiBold" FontSize="14" Foreground="#111827" Margin="10,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <Grid Grid.Row="1">
@@ -118,22 +123,34 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <DataGrid x:Name="TargetGrid" Grid.Column="0"
-                              ItemsSource="{Binding Targets}"
+                    <DataGrid x:Name="ActionGrid" Grid.Column="0"
+                              ItemsSource="{Binding Actions}"
                               AutoGenerateColumns="False"
                               CanUserAddRows="False"
                               CanUserDeleteRows="False"
-                              SelectedItem="{Binding SelectedTarget}"
+                              SelectedItem="{Binding SelectedAction}"
                               SelectedIndex="{Binding SelectedIndex}"
                               SelectionMode="Extended">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="名称" Binding="{Binding Name}" Width="*"/>
-                            <DataGridTextColumn Header="X 坐标" Binding="{Binding Position.X}" Width="80" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Y 坐标" Binding="{Binding Position.Y}" Width="80" IsReadOnly="True"/>
-                            <DataGridComboBoxColumn Header="点击类型" Width="80"
-                                                    SelectedItemBinding="{Binding ClickTypeName}"
-                                                    ItemsSource="{Binding Source={StaticResource ClickTypeList}}"/>
-                            <DataGridTextColumn Header="延迟(ms)" Binding="{Binding Delay}" Width="75"/>
+                            <DataGridTextColumn Header="名称" Binding="{Binding Name}" Width="60"/>
+                            <DataGridComboBoxColumn Header="操作类型" Width="85"
+                                                    SelectedItemBinding="{Binding ActionTypeName}">
+                                <DataGridComboBoxColumn.ItemsSource>
+                                    <x:Array Type="system:String" xmlns:system="clr-namespace:System;assembly=mscorlib">
+                                        <system:String>鼠标左键</system:String>
+                                        <system:String>鼠标右键</system:String>
+                                        <system:String>鼠标双击</system:String>
+                                        <system:String>鼠标中键</system:String>
+                                        <system:String>键盘按下</system:String>
+                                        <system:String>键盘释放</system:String>
+                                        <system:String>键盘按键</system:String>
+                                    </x:Array>
+                                </DataGridComboBoxColumn.ItemsSource>
+                            </DataGridComboBoxColumn>
+                            <DataGridTextColumn Header="X" Binding="{Binding Position.X}" Width="70" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Y" Binding="{Binding Position.Y}" Width="70" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="按键" Binding="{Binding KeyName}" Width="75"/>
+                            <DataGridTextColumn Header="延迟(ms)" Binding="{Binding Delay}" Width="*"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
@@ -167,9 +184,9 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
@@ -186,18 +203,27 @@
                          VerticalAlignment="Stretch"
                          HorizontalAlignment="Left"
                          MinHeight="32"
-                         MinWidth="200"/>
+                         MinWidth="150"/>
                 <TextBox Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2"
                          Text="{Binding LoopInterval, UpdateSourceTrigger=PropertyChanged}"
                          Margin="16,0,0,0"
                          VerticalAlignment="Stretch"
                          HorizontalAlignment="Left"
                          MinHeight="32"
-                         MinWidth="200"/>
+                         MinWidth="150"/>
 
-                <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Bottom">
-                    <Button Content="▶ 开始 (F5)" Click="BtnStart_Click" Style="{StaticResource SuccessButton}" Height="32" Margin="0,0,6,0" Padding="12,0" VerticalContentAlignment="Center" MinHeight="32"/>
-                    <Button Content="■ 停止 (F6)" Click="BtnStop_Click" Style="{StaticResource DangerButton}" Height="32" Margin="6,0,0,0" Padding="12,0" VerticalContentAlignment="Center" MinHeight="32"/>
+                <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="4" Orientation="Horizontal"  VerticalAlignment="Bottom">
+                    <Button Content="● 录制 (F7)" Click="BtnToggleRecording_Click" Height="32" MinHeight="32">
+                        <Button.Style>
+                            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource WarningButton}">
+                                <Setter Property="Margin" Value="0,0,6,0"/>
+                                <Setter Property="Padding" Value="12,0"/>
+                                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Content="▶ 开始 (F5)" Click="BtnStart_Click" Style="{StaticResource SuccessButton}" Height="32" MinHeight="32" Margin="6,0" Padding="12,0" VerticalContentAlignment="Center"/>
+                    <Button Content="■ 停止 (F6)" Click="BtnStop_Click" Style="{StaticResource DangerButton}" Height="32" MinHeight="32" Margin="6,0,0,0" Padding="12,0" VerticalContentAlignment="Center"/>
                 </StackPanel>
             </Grid>
         </Border>

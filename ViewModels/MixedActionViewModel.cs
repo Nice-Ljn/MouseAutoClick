@@ -10,22 +10,22 @@ using MouseRecorderWpf.Services;
 
 namespace MouseRecorderWpf.ViewModels
 {
-    public class MultiClickViewModel : INotifyPropertyChanged
+    public class MixedActionViewModel : INotifyPropertyChanged
     {
-        private readonly MultiClickManager manager;
+        private readonly MixedActionManager manager;
         private readonly DispatcherTimer positionTimer;
+        private bool isRecording = false;
 
         private string statusText = "就绪";
         private string currentPosition = "(0, 0)";
         private int repeatCount = 1;
         private int loopInterval = 1000;
-        private MultiClickTarget? selectedTarget;
+        private MixedAction? selectedAction;
         private int selectedIndex = -1;
-        private int nextTargetNumber = 1;
         private string currentPlanName = "方案A";
         private int planNumber = 1;
 
-        public ObservableCollection<MultiClickTarget> Targets { get; } = new ObservableCollection<MultiClickTarget>();
+        public ObservableCollection<MixedAction> Actions { get; } = new ObservableCollection<MixedAction>();
         public ObservableCollection<string> PlanNames { get; } = new ObservableCollection<string>();
 
         public string StatusText
@@ -62,10 +62,10 @@ namespace MouseRecorderWpf.ViewModels
             }
         }
 
-        public MultiClickTarget? SelectedTarget
+        public MixedAction? SelectedAction
         {
-            get => selectedTarget;
-            set { selectedTarget = value; OnPropertyChanged(); }
+            get => selectedAction;
+            set { selectedAction = value; OnPropertyChanged(); }
         }
 
         public int SelectedIndex
@@ -82,21 +82,33 @@ namespace MouseRecorderWpf.ViewModels
 
         public bool IsRunning => manager.IsRunning;
 
+        public bool IsRecording => isRecording;
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public MultiClickViewModel()
+        public MixedActionViewModel()
         {
-            manager = new MultiClickManager();
-            manager.CurrentTargetChanged += OnCurrentTargetChanged;
-            manager.ClickCompleted += OnClickCompleted;
+            manager = new MixedActionManager(Actions);
+            manager.CurrentActionChanged += OnCurrentActionChanged;
+            manager.ActionCompleted += OnActionCompleted;
+            manager.RecordingStateChanged += OnRecordingStateChanged;
             manager.PlanChanged += OnPlanChanged;
+
+            HotkeyRegistry.GlobalKeyEvent += OnGlobalKeyEvent;
 
             positionTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
             positionTimer.Tick += OnPositionTimerTick;
             positionTimer.Start();
 
             RefreshPlanNames();
-            RefreshTargets();
+        }
+
+        private void OnGlobalKeyEvent(int keyCode, bool isKeyDown)
+        {
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                HandleKeyPress(keyCode, isKeyDown);
+            });
         }
 
         private void OnPositionTimerTick(object? sender, EventArgs e)
@@ -105,7 +117,7 @@ namespace MouseRecorderWpf.ViewModels
             CurrentPosition = $"({pos.X}, {pos.Y})";
         }
 
-        private void OnCurrentTargetChanged(int index)
+        private void OnCurrentActionChanged(int index)
         {
             App.Current.Dispatcher.Invoke(() =>
             {
@@ -113,13 +125,17 @@ namespace MouseRecorderWpf.ViewModels
             });
         }
 
-        private void OnClickCompleted()
+        private void OnActionCompleted()
         {
             App.Current.Dispatcher.Invoke(() =>
             {
                 StatusText = "就绪";
                 OnPropertyChanged(nameof(IsRunning));
             });
+        }
+
+        private void OnRecordingStateChanged(bool recordingState)
+        {
         }
 
         private void OnPlanChanged()
@@ -129,52 +145,120 @@ namespace MouseRecorderWpf.ViewModels
                 CurrentPlanName = manager.CurrentPlan?.Name ?? "方案A";
                 RepeatCount = manager.RepeatCount;
                 LoopInterval = manager.LoopInterval;
-                RefreshTargets();
+                // Actions 已由 manager 直接操作，无需刷新
             });
         }
 
-        public void AddCurrentPosition()
+        public void HandleKeyPress(int keyCode, bool isKeyDown)
+        {
+            var keyName = KeyboardHook.GetKeyName(keyCode);
+            if (string.IsNullOrEmpty(keyName)) return;
+
+            // 检查当前是否在混合录制页面
+            var mainWindow = System.Windows.Application.Current?.MainWindow as Views.MainWindow;
+            bool isMixedActionTab = mainWindow != null && ((ViewModels.MainWindowViewModel)mainWindow.DataContext).ActiveTab == 2;
+
+            if (isMixedActionTab && keyName == "F4" && isKeyDown)
+            {
+                RecordMouseClick();
+            }
+            else if (isMixedActionTab && keyName == "F6" && isKeyDown)
+            {
+                if (IsRecording)
+                {
+                    StopRecording();
+                }
+                else if (IsRunning)
+                {
+                    Stop();
+                }
+            }
+            else if (isMixedActionTab && IsRecording && keyName != "F4" && keyName != "F5" && keyName != "F6" && keyName != "F7")
+            {
+                if (isKeyDown)
+                {
+                    RecordKeyboardAction(MixedActionType.KeyboardKeyDown, keyName);
+                }
+                else
+                {
+                    RecordKeyboardAction(MixedActionType.KeyboardKeyUp, keyName);
+                }
+            }
+        }
+
+        private void RecordMouseClick()
         {
             var pos = MouseSimulator.GetCurrentPosition();
-            var targetName = $"点{nextTargetNumber}";
-            manager.AddTarget(pos, ClickType.LeftClick, 50, targetName);
-            nextTargetNumber++;
-            RefreshTargets();
+            manager.RecordMouseAction(MixedActionType.MouseLeftClick, pos);
+        }
+
+        private void RecordKeyboardKeyPress(string keyName)
+        {
+            manager.RecordKeyboardAction(MixedActionType.KeyboardKeyPress, keyName);
+        }
+
+        private void RecordKeyboardAction(MixedActionType actionType, string keyName)
+        {
+            manager.RecordKeyboardAction(actionType, keyName);
+        }
+
+        public void AddMouseAction(MixedActionType actionType)
+        {
+            var pos = MouseSimulator.GetCurrentPosition();
+            manager.RecordMouseAction(actionType, pos);
+        }
+
+        public void AddKeyboardAction(MixedActionType actionType, string keyName)
+        {
+            manager.RecordKeyboardAction(actionType, keyName);
         }
 
         public void RemoveSelected()
         {
-            if (SelectedTarget == null) return;
-            manager.RemoveTarget(SelectedTarget.Id);
-            RefreshTargets();
+            if (SelectedAction == null) return;
+            manager.RemoveAction(SelectedAction.Id);
         }
 
         public void ClearAll()
         {
-            manager.ClearTargets();
-            Targets.Clear();
-            nextTargetNumber = 1;
+            manager.ClearActions();
         }
 
         public void MoveUp()
         {
             if (SelectedIndex <= 0) return;
-            manager.SwapTargets(SelectedIndex, SelectedIndex - 1);
-            RefreshTargets();
+            manager.SwapActions(SelectedIndex, SelectedIndex - 1);
             SelectedIndex--;
         }
 
         public void MoveDown()
         {
-            if (SelectedIndex < 0 || SelectedIndex >= Targets.Count - 1) return;
-            manager.SwapTargets(SelectedIndex, SelectedIndex + 1);
-            RefreshTargets();
+            if (SelectedIndex < 0 || SelectedIndex >= Actions.Count - 1) return;
+            manager.SwapActions(SelectedIndex, SelectedIndex + 1);
             SelectedIndex++;
+        }
+
+        public void StartRecording()
+        {
+            if (manager.IsRunning) return;
+            manager.StartRecording();
+            isRecording = true;
+            OnPropertyChanged(nameof(IsRecording));
+            StatusText = "录制中... (按 F4 添加鼠标点击, F6 停止录制)";
+        }
+
+        public void StopRecording()
+        {
+            if (!isRecording) return;
+            manager.StopRecording();
+            isRecording = false;
+            OnPropertyChanged(nameof(IsRecording));
+            StatusText = "就绪";
         }
 
         public void Start()
         {
-            if (manager.IsRunning || manager.Targets.Count == 0) return;
+            if (manager.IsRunning || manager.Actions.Count == 0) return;
             StatusText = "运行中... (按 F6 停止)";
             OnPropertyChanged(nameof(IsRunning));
             manager.Start();
@@ -186,14 +270,16 @@ namespace MouseRecorderWpf.ViewModels
             manager.Stop();
         }
 
-        public void SyncTargetFromGrid(int index)
+        public void RemoveSelectedItems(List<MixedAction> items)
         {
-            if (index >= 0 && index < Targets.Count && index < manager.Targets.Count)
+            if (items == null || items.Count == 0) return;
+            foreach (var item in items)
             {
-                manager.Targets[index] = Targets[index];
+                manager.RemoveAction(item.Id);
             }
         }
 
+        // 方案管理
         public void AddPlan()
         {
             string newName;
@@ -221,9 +307,6 @@ namespace MouseRecorderWpf.ViewModels
             if (manager.SwitchPlan(planName))
             {
                 CurrentPlanName = planName;
-                nextTargetNumber = manager.Targets.Count > 0 
-                    ? manager.Targets.Max(t => int.TryParse(t.Name.Replace("点", ""), out var n) ? n : 0) + 1 
-                    : 1;
             }
         }
 
@@ -237,13 +320,14 @@ namespace MouseRecorderWpf.ViewModels
             CurrentPlanName = newName;
         }
 
-        private void RefreshTargets()
+        public string ExportCurrentPlan()
         {
-            Targets.Clear();
-            foreach (var target in manager.Targets)
-            {
-                Targets.Add(target);
-            }
+            return manager.ExportPlan(CurrentPlanName);
+        }
+
+        public bool ImportPlan(string json)
+        {
+            return manager.ImportPlan(json);
         }
 
         private void RefreshPlanNames()

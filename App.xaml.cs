@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿using System;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using System;
 using System.Diagnostics;
 using System.Security.Principal;
 using System.Windows;
@@ -33,20 +33,35 @@ public partial class App : System.Windows.Application
 
     private static void RunAsAdmin()
     {
-        var processInfo = new ProcessStartInfo
-        {
-            FileName = System.Reflection.Assembly.GetExecutingAssembly().Location,
-            UseShellExecute = true,
-            Verb = "runas"
-        };
-
         try
         {
-            Process.Start(processInfo);
+            var assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            
+            if (assemblyPath.EndsWith(".dll"))
+            {
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = $"run --project \"{System.IO.Path.GetDirectoryName(assemblyPath)}\"",
+                    UseShellExecute = true,
+                    Verb = "runas"
+                };
+                Process.Start(processInfo);
+            }
+            else
+            {
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = assemblyPath,
+                    UseShellExecute = true,
+                    Verb = "runas"
+                };
+                Process.Start(processInfo);
+            }
         }
         catch
         {
-            System.Windows.MessageBox.Show("需要管理员权限才能正常运行", "权限不足", MessageBoxButton.OK, MessageBoxImage.Warning);
+            System.Windows.MessageBox.Show("需要管理员权限才能正常运行，请右键以管理员身份运行", "权限不足", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 }
