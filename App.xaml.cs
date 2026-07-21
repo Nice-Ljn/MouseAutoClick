@@ -36,13 +36,14 @@ public partial class App : System.Windows.Application
         try
         {
             var assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            
-            if (assemblyPath.EndsWith(".dll"))
+            var assemblyDir = System.IO.Path.GetDirectoryName(assemblyPath);
+            var exePath = System.IO.Path.Combine(assemblyDir, "MouseRecorderWpf.exe");
+
+            if (System.IO.File.Exists(exePath))
             {
                 var processInfo = new ProcessStartInfo
                 {
-                    FileName = "dotnet",
-                    Arguments = $"run --project \"{System.IO.Path.GetDirectoryName(assemblyPath)}\"",
+                    FileName = exePath,
                     UseShellExecute = true,
                     Verb = "runas"
                 };
@@ -52,9 +53,11 @@ public partial class App : System.Windows.Application
             {
                 var processInfo = new ProcessStartInfo
                 {
-                    FileName = assemblyPath,
+                    FileName = "dotnet",
+                    Arguments = $"\"{assemblyPath}\"",
                     UseShellExecute = true,
-                    Verb = "runas"
+                    Verb = "runas",
+                    WorkingDirectory = assemblyDir
                 };
                 Process.Start(processInfo);
             }
